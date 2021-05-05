@@ -688,6 +688,8 @@ export default function AddLiquidity({
                       </RowBetween>
                     )}
                   <ButtonError
+                    borderRadius="12px"
+                    padding={'12px'}
                     onClick={() => {
                       expertMode ? onAdd() : setShowConfirm(true)
                     }}
