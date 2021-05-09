@@ -3,6 +3,7 @@ import { ExternalLink, ThemedBackground, TYPE } from '../../theme'
 import { AutoColumn } from '../Column'
 import styled from 'styled-components'
 import ReactGA from 'react-ga'
+import { getUserAgent } from '../../utils/getUserAgent'
 
 const FallbackWrapper = styled.div`
   display: flex;
@@ -24,7 +25,7 @@ const CodeBlockWrapper = styled.div`
   box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
     0px 24px 32px rgba(0, 0, 0, 0.01);
   border-radius: 24px;
-  padding: 24px;
+  padding: 18px 24px;
   color: ${({ theme }) => theme.text1};
 `
 
@@ -62,6 +63,7 @@ export default class ErrorBoundary extends React.Component<unknown, ErrorBoundar
   render() {
     const { error } = this.state
     if (error !== null) {
+      const encodedBody = encodeURIComponent(issueBody(error))
       return (
         <FallbackWrapper>
           <ThemedBackground />
@@ -73,14 +75,14 @@ export default class ErrorBoundary extends React.Component<unknown, ErrorBoundar
                 </TYPE.label>
               </SomethingWentWrongWrapper>
               <CodeBlockWrapper>
-                <TYPE.main fontSize={10}>{error.stack}</TYPE.main>
+                <code>
+                  <TYPE.main fontSize={10}>{error.stack}</TYPE.main>
+                </code>
               </CodeBlockWrapper>
               <LinkWrapper>
                 <ExternalLink
                   id={`create-github-issue-link`}
-                  href={
-                    'https://github.com/Uniswap/uniswap-interface/issues/new?assignees=&labels=bug&template=bug-report.md&title=Crash report'
-                  }
+                  href={`https://github.com/Uniswap/uniswap-interface/issues/new?assignees=&labels=bug&body=${encodedBody}&title=Crash report`}
                   target="_blank"
                 >
                   <TYPE.link fontSize={16}>
@@ -96,4 +98,47 @@ export default class ErrorBoundary extends React.Component<unknown, ErrorBoundar
     }
     return this.props.children
   }
+}
+
+function issueBody(error: Error): string {
+  if (!error) throw new Error('no error to report')
+  const deviceData = getUserAgent()
+  return `**Bug Description**
+  
+App crashed
+
+**Steps to Reproduce**
+
+1. Go to ...
+2. Click on ...
+   ...
+   
+${
+  error.name &&
+  `**Error**
+
+\`\`\`
+${error.name}${error.message && `: ${error.message}`}
+\`\`\`
+`
+}
+${
+  error.stack &&
+  `**Stacktrace**
+
+\`\`\`
+${error.stack}
+\`\`\`
+`
+}
+${
+  deviceData &&
+  `**Device data**
+
+\`\`\`json5
+${JSON.stringify(deviceData, null, 2)}
+\`\`\`
+`
+}
+`
 }
